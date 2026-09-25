@@ -11,14 +11,12 @@ Complexity:
 
 Alternative Approaches:
 - Brute Force: Check every pair (i, j). Time: O(N^2), Space: O(1).
-- Sorting: Sort the array and check adjacent elements. Time: O(N log N), Space: O(1) or O(N) depending on sort.
+- Sorting: Sort array and check adjacent. Time: O(N log N), Space: O(1) or O(N).
 """
-
-from typing import List
 
 
 class Solution:
-    def containsDuplicate(self, nums: List[int]) -> bool:
+    def containsDuplicate(self, nums: list[int]) -> bool:
         """Determines if any integer appears at least twice using a hash set."""
         seen = set()
         for num in nums:
@@ -27,7 +25,7 @@ class Solution:
             seen.add(num)
         return False
 
-    def containsDuplicate_one_liner(self, nums: List[int]) -> bool:
+    def containsDuplicate_one_liner(self, nums: list[int]) -> bool:
         """Pythonic one-liner comparing length of list vs length of set."""
         return len(nums) != len(set(nums))
 

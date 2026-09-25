@@ -7,13 +7,13 @@ An Anagram is a word or phrase formed by rearranging the letters of a different 
 typically using all the original letters exactly once.
 
 Complexity:
-- Time Complexity: O(N) — Where N is the length of strings s and t. Single or double pass character counting.
-- Space Complexity: O(1) or O(K) — K is character set size (at most 26 lowercase English letters, so O(1) auxiliary space).
+- Time Complexity: O(N) — N is length of strings s and t (single/double pass).
+- Space Complexity: O(1) or O(K) — K is charset size (26 letters for English).
 
 Alternative Approaches:
-- Sorting: Sort both strings and compare: sorted(s) == sorted(t). Time: O(N log N), Space: O(N).
-- Frequency Array (size 26): Fixed-size integer array to count character balances. Time: O(N), Space: O(1).
-- Hash Map (collections.Counter or dict): Generalizes well to unicode characters. Time: O(N), Space: O(K).
+- Sorting: Sort both strings and compare: sorted(s) == sorted(t). Time: O(N log N).
+- Frequency Array (size 26): Fixed-size integer array to count character balances.
+- Hash Map (Counter or dict): Generalizes well to unicode. Time: O(N), Space: O(K).
 """
 
 from collections import Counter
@@ -48,7 +48,7 @@ class Solution:
             return False
 
         char_counts = [0] * 26
-        base = ord('a')
+        base = ord("a")
 
         for ch_s, ch_t in zip(s, t):
             char_counts[ord(ch_s) - base] += 1

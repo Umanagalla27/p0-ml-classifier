@@ -1,4 +1,5 @@
 from fastapi.testclient import TestClient
+
 from src.api import app
 
 client = TestClient(app)
@@ -13,10 +14,7 @@ def test_health_check():
 
 
 def test_predict_valid_input():
-    response = client.post(
-        "/predict",
-        json={"text": "Wall Street stocks rise on Fed news"}
-    )
+    response = client.post("/predict", json={"text": "Wall Street stocks rise on Fed news"})
     assert response.status_code == 200
     data = response.json()
 
@@ -32,16 +30,10 @@ def test_predict_valid_input():
 
 
 def test_predict_empty_text_rejected():
-    response = client.post(
-        "/predict",
-        json={"text": ""}
-    )
+    response = client.post("/predict", json={"text": ""})
     assert response.status_code == 422  # Pydantic validation error
 
 
 def test_predict_whitespace_only_rejected():
-    response = client.post(
-        "/predict",
-        json={"text": "   "}
-    )
+    response = client.post("/predict", json={"text": "   "})
     assert response.status_code == 422

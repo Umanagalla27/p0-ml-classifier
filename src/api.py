@@ -1,27 +1,35 @@
-import os
 import json
+import os
 import time
-from fastapi import FastAPI
-from pydantic import BaseModel, field_validator
-import psycopg2
-import redis
+
 import joblib
 import numpy as np
+import psycopg2
+import redis
+from fastapi import FastAPI
+from pydantic import BaseModel, field_validator
 
 app = FastAPI(
     title="P0 Text Classifier",
     description="AG News classifier: ML vs Transformer vs LLM comparison",
-    version="0.1.0"
+    version="0.1.0",
 )
 
 # Global model holder
 model_pipeline = None
 LABEL_NAMES = ["World", "Sports", "Business", "Sci/Tech"]
 
-def get_db_connection():
-    return psycopg2.connect(os.getenv("DATABASE_URL", "postgresql://uma:password@localhost:5432/classifier"))
 
-redis_client = redis.Redis.from_url(os.getenv("REDIS_URL", "redis://localhost:6379"), decode_responses=True)
+def get_db_connection():
+    return psycopg2.connect(
+        os.getenv("DATABASE_URL", "postgresql://uma:password@localhost:5432/classifier")
+    )
+
+
+redis_client = redis.Redis.from_url(
+    os.getenv("REDIS_URL", "redis://localhost:6379"), decode_responses=True
+)
+
 
 class PredictRequest(BaseModel):
     text: str
@@ -33,12 +41,14 @@ class PredictRequest(BaseModel):
             raise ValueError("text cannot be empty")
         return v.strip()
 
+
 class PredictResponse(BaseModel):
     label: str
     confidence: float
     model_used: str
     latency_ms: float
     cached: bool = False
+
 
 def setup_db():
     conn = get_db_connection()
@@ -58,11 +68,12 @@ def setup_db():
     cur.close()
     conn.close()
 
+
 @app.on_event("startup")
 def on_startup():
     global model_pipeline
     setup_db()
-    
+
     # Load model artifact
     model_path = os.getenv("MODEL_PATH", "models/tfidf_logreg.joblib")
     if os.path.exists(model_path):
@@ -71,12 +82,11 @@ def on_startup():
     else:
         print(f"Warning: Model file not found at {model_path}. Placeholder mode active.")
 
+
 @app.get("/health")
 def health_check():
-    return {
-        "status": "ok",
-        "model_loaded": model_pipeline is not None
-    }
+    return {"status": "ok", "model_loaded": model_pipeline is not None}
+
 
 @app.post("/predict", response_model=PredictResponse)
 def predict(request: PredictRequest):
@@ -94,7 +104,7 @@ def predict(request: PredictRequest):
                 confidence=data["confidence"],
                 model_used=data["model_used"],
                 latency_ms=round(latency_ms, 2),
-                cached=True
+                cached=True,
             )
     except Exception as e:
         print(f"Redis cache check failed: {e}")
@@ -119,7 +129,9 @@ def predict(request: PredictRequest):
         redis_client.setex(
             cache_key,
             3600,
-            json.dumps({"label": label, "confidence": round(confidence, 4), "model_used": model_name})
+            json.dumps(
+                {"label": label, "confidence": round(confidence, 4), "model_used": model_name}
+            ),
         )
     except Exception as e:
         print(f"Redis cache set failed: {e}")
@@ -129,8 +141,9 @@ def predict(request: PredictRequest):
         conn = get_db_connection()
         cur = conn.cursor()
         cur.execute(
-            "INSERT INTO predictions (input_text, label, confidence, model_used, latency_ms) VALUES (%s, %s, %s, %s, %s)",
-            (request.text, label, confidence, model_name, latency_ms)
+            "INSERT INTO predictions (input_text, label, confidence, model_used, latency_ms) "
+            "VALUES (%s, %s, %s, %s, %s)",
+            (request.text, label, confidence, model_name, latency_ms),
         )
         conn.commit()
         cur.close()
@@ -143,5 +156,5 @@ def predict(request: PredictRequest):
         confidence=round(confidence, 4),
         model_used=model_name,
         latency_ms=round(latency_ms, 2),
-        cached=False
+        cached=False,
     )

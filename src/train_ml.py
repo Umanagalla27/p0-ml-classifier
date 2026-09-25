@@ -1,15 +1,17 @@
 import os
+
 import joblib
 import matplotlib.pyplot as plt
 import numpy as np
 from datasets import load_dataset
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.linear_model import LogisticRegression
-from sklearn.metrics import classification_report, confusion_matrix, ConfusionMatrixDisplay
+from sklearn.metrics import ConfusionMatrixDisplay, classification_report, confusion_matrix
 from sklearn.model_selection import learning_curve
 from sklearn.pipeline import Pipeline
 
 LABEL_NAMES = ["World", "Sports", "Business", "Sci/Tech"]
+
 
 def train_and_evaluate():
     print("[1/5] Loading AG News dataset...")
@@ -21,10 +23,15 @@ def train_and_evaluate():
 
     print("[2/5] Building TF-IDF + Logistic Regression pipeline...")
     # Production-ready pipeline: handles vectorization + model in a single artifact
-    pipeline = Pipeline([
-        ("tfidf", TfidfVectorizer(max_features=25000, ngram_range=(1, 2), stop_words="english")),
-        ("clf", LogisticRegression(max_iter=1000, C=1.0, solver="lbfgs", n_jobs=-1))
-    ])
+    pipeline = Pipeline(
+        [
+            (
+                "tfidf",
+                TfidfVectorizer(max_features=25000, ngram_range=(1, 2), stop_words="english"),
+            ),
+            ("clf", LogisticRegression(max_iter=1000, C=1.0, solver="lbfgs", n_jobs=-1)),
+        ]
+    )
 
     print("[3/5] Training model (this will take ~30-60 seconds)...")
     pipeline.fit(X_train, y_train)
@@ -32,9 +39,9 @@ def train_and_evaluate():
     print("[4/5] Evaluating on test set (7,600 samples)...")
     y_pred = pipeline.predict(X_test)
     report = classification_report(y_test, y_pred, target_names=LABEL_NAMES, digits=4)
-    print("\n" + "="*50)
+    print("\n" + "=" * 50)
     print("CLASSIFICATION REPORT:")
-    print("="*50)
+    print("=" * 50)
     print(report)
 
     # Save metrics report to results/
@@ -72,7 +79,7 @@ def train_and_evaluate():
         cv=3,
         train_sizes=np.linspace(0.1, 1.0, 5),
         scoring="accuracy",
-        n_jobs=-1
+        n_jobs=-1,
     )
 
     train_mean = np.mean(train_scores, axis=1)
@@ -90,6 +97,7 @@ def train_and_evaluate():
     plt.savefig("results/learning_curve.png", dpi=200)
     plt.close()
     print("Saved learning curve to results/learning_curve.png")
+
 
 if __name__ == "__main__":
     train_and_evaluate()
