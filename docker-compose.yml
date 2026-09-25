@@ -1,0 +1,42 @@
+services:
+  api:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+    ports:
+      - "8000:8000"
+    environment:
+      - DATABASE_URL=postgresql://uma:password@db:5432/classifier
+      - REDIS_URL=redis://redis:6379
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    volumes:
+      - ./src:/app/src
+      - ./models:/app/models
+
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: uma
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: classifier
+    ports:
+      - "5433:5432" # mapped to 5433 to prevent conflict with local Postgres
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U uma -d classifier"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6380:6379" # mapped to 6380 to prevent conflict with local Redis
+
+volumes:
+  postgres_data:
